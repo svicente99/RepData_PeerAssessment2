@@ -1,0 +1,214 @@
+---
+title: "Reproducible Research: <br><small><b>Peer Assessment 2</b></small>"
+author: "<a href='mailto:svicente99@yahoo.com' title='twitter:@svicente99'>Sergio Vicente</a>"
+twitter: "@svicente99"
+date: "February 20th, 2015"
+output: 
+  html_document:
+    keep_md: true
+transition: fade
+transition-speed: fast
+subtitle: "<span style='color:#5882FA;font-size:0.8em'>Analysis of NOAA Storm Database - severity and harmfull consequences to population health</span>" 
+---
+
+<br><br>
+You may get source code of this at <https://github.com/svicente99/RepData_PeerAssessment2> 
+
+And html version is available at RPubs: <http://rpubs.com/svicente99/RepData_PeerAssessment2>
+
+* * * *
+
+### Synopsis
+
+This analysis aims to reveal most harmful storm events that cause problems for population health in U.S.A. As well, it points out greatest economic losses in consequence of this kind of events.
+It's based on a database provided for the NOAA - National Oceanic and Atmospheric Administration's - which tracks major storms and weather events in the whole country; data are collected from 1950 thru 2011.
+
+All values obtained from a compressed file are summarized at specific data frames, basically a subset of event types and features of interest: frequency of cases and total damage cost.
+
+After having developed tables and plots to this report, we may conclude that **wind storms** are the worst event types that cause injuries, fatalities and economic damages. They always appear among top ten situations ranked in descending order. _'TORNADO'_ is coincidentally the 1st one cause of severe problems with storms in the United States, as demonstrated by the figures you can see above.
+
+------------
+
+#### Introduction
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks the characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+---------
+
+#### Data Sourcing
+
+The data for this assignment can be downloaded from the course web site:
+
+* Dataset: <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2">Storm Data</a> [47 MBytes]
+
+The file has comma-separated-value format, compressed via the bzip2 algorithm to reduce its size. 
+
+There is also some documentation of the database available. See above links to know how some of the variables are constructed/defined.
+
+* [National Weather Service Storm Data Documentation]
+    <https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf>
+
+* [National Climatic Data Center Storm Events FAQ]
+    <https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2/_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf>
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+---------
+
+### Data Processing
+
+Setting parameters and files to be processed:
+
+```{r, cache=TRUE}
+
+# MAIN PARAMETERS
+DATA_FOLDER <- "./data"  # subdirectory of current named 'data'
+URL_DATA <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2F"
+ZIP_FILE <- "StormData.csv.bz2"
+CSV_DATA <- "StormData.csv"
+# -----------------------------------------------------------------
+
+# cache file used in this job
+cached_file = paste( DATA_FOLDER, CSV_DATA, sep = "/" );
+bzip_file = paste( DATA_FOLDER, ZIP_FILE, sep = "/" );
+
+```
+
+Getting data file and assembling the main data frame (df):
+
+```{r,cache=TRUE}
+
+# check if the zip_file is already saved ("cached") onto disk
+
+if( !file.exists(cached_file) ) {
+    url = paste(URL_DATA, ZIP_FILE, sep="")
+    if( !file.exists(DATA_FOLDER) )  dir.create(DATA_FOLDER)
+	  if( !file.exists(bzip_file) ) { 
+		  # if it is not available --> Download it !
+		  downloadStatus = download.file(url, method="internal", destfile=bzip_file)
+	      if(downloadStatus != 0)  stop("Download failed from URL: ", url)
+	  }
+	  # read a bzip file and set to a data frame
+	  df <- read.csv(bzfile(bzip_file))
+	  write.csv(df, file = cached_file, row.names = TRUE)
+} else {
+    # read data from zip file already writen on disk
+	  df <- read.csv(cached_file)
+}
+
+# above, we have a extract of ten lines of main data available to analyse
+head(df)
+```
+
+Selecting all diferent types of interesting events (fatalities, injuries and damage cost):
+
+```{r}
+df2 <- aggregate(df$INJURIES, by=list(Event=df$EVTYPE), sum)
+injuriesByEvent <- df2[order(df2$x),]
+names(injuriesByEvent)[names(injuriesByEvent)=="x"] <- "Total_of_Injuries"
+# above, ten most severe events that cause more injuries to U.S. population 
+tail(injuriesByEvent,10)
+```
+
+==> There were `r nrow(df2)` types of storm events identified by this summary.
+
+```{r}
+df2 <- aggregate(df$FATALITIES, by=list(Event=df$EVTYPE), sum)
+fatalitiesByEvent <- df2[order(df2$x),]
+names(fatalitiesByEvent)[names(fatalitiesByEvent)=="x"] <- "Total_of_Fatalities"
+# above, ten most severe events that cause more fatalities to U.S. population 
+tail(fatalitiesByEvent,10)
+```
+
+```{r}
+df$DAMAGE_COSTS <- round((df$PROPDMG + df$CROPDMG)/1000,3)
+df2 <- aggregate(df$DAMAGE_COSTS, by=list(Event=df$EVTYPE), sum)
+costDamage <- df2[order(df2$x),]
+names(costDamage)[names(costDamage)=="x"] <- "Total_Cost"
+# above, ten most severe events that cause more economic damages to U.S. population 
+tail(costDamage,10)
+```
+
+```{r}
+df$YEAR <- as.integer(format(as.Date(df$BGN_DATE, "%m/%d/%Y 0:00:00"), "%Y"))
+costByYear <- aggregate(df$DAMAGE_COSTS, by=list(Year=df$YEAR), sum)
+names(costByYear)[names(costByYear)=="x"] <- "Annual_Cost"
+tail(costByYear,10)
+```
+
+And lastly, total values of economic losses with storms (2011-2002) listed from 2002 to next ten years.
+
+### Results
+
+Drawing two graphs, each one associated with a **kind of harmful to population**:
+
+```{r fig.height=6,fig.width=8}
+
+## create a panel layout 1x2 setting its margins
+par(mfrow=c(1, 2),mar=c(3, 6, 2, 1), oma=c(1.5, 2, 2, 1))													
+
+cEvents_I <- tail(injuriesByEvent$Event,10)
+cEvents_F <- tail(fatalitiesByEvent$Event,10)
+
+barplot(tail(injuriesByEvent$Total_of_Injuries,10), main="Injuries", 
+        horiz=TRUE, xlim=c(0,90000), names.arg=cEvents_I, las=1, cex.names=0.7)
+barplot(tail(fatalitiesByEvent$Total_of_Fatalities,10), main="Fatalities", 
+        horiz=TRUE, xlim=c(0,6000), names.arg=cEvents_F,  las=1, cex.names=0.7)
+
+mtext( "TOP TEN EVENT TYPES THAT CAUSE HARMFUL IN U.S. POPULATION", side=3, outer=TRUE, col="blue", font=2, cex=1.15 )  
+mtext( "_number of cases_", side=1, outer=TRUE, col="blue", font=1, cex=0.9 )  
+box("outer", col="maroon", lwd=3) 
+
+```
+
+
+Drawing one graph associated with **cost of damage** caused by storm events:
+
+```{r fig.height=6,fig.width=8}
+
+## create a panel layout 1x2 setting its margins
+par(mfrow=c(1, 1),mar=c(3, 7, 2, 1), oma=c(1.5, 2, 2, 1))  												
+
+cEvents_D <- tail(costDamage$Event,10)
+
+barplot(tail(costDamage$Total_Cost,10), main="Total Cost of Damage", 
+        horiz=TRUE, xlim=c(0,4000), names.arg=cEvents_D, las=1, cex.names=0.7)
+
+mtext( "TOP TEN EVENT TYPES THAT CAUSE GREATEST ECONOMIC LOSSES IN U.S. POPULATION", side=3,   outer=TRUE, col="blue", font=2, cex=1.0 )  
+mtext( "_ US$ (x 1,000) _", side=1, outer=TRUE, col="blue", font=1, cex=0.9 )  
+box("outer", col="maroon", lwd=3) 
+
+```
+
+
+And the last graph is also related to **cost of damage** but observed along years of the research:
+
+```{r fig.height=6,fig.width=8}
+
+par(mfrow=c(1, 1),mar=c(3, 3, 2, 2), oma=c(1.5, 2, 2, 1))    											
+plot(costByYear$Year, costByYear$Annual_Cost, type="o", xlab="Year", ylab="US$ x 1,000")
+# Label x-axis with years
+nYears = nrow(costByYear)
+axis(1, at=c(1:nYears), lab=costByYear$Year, cex.axis=0.8)
+title(main="Total Annual Cost of Damage caused by Events Storm", col.main="blue", font.main=4)
+mtext( "Year", side=1, outer=TRUE, col="blue", font=1, cex=0.9 )  
+mtext( "_ US$ (x 1,000) _", side=2, outer=TRUE, col="blue", font=1, cex=0.8 )  
+box("outer", col="maroon", lwd=3) 
+
+```
+
+* * * *
+
+## <u>Conclusion</u>
+
+In relation to harmful events for the U.S. population, it's clear that _'TORNADO'_ is the worst storm weather between them. It's inserted into the group of **wind storms**, like _'THUNDERSTORM WINDS'_ and _'HIGH WINDS'_. Other groups that have importance are **flood** [_'FLOOD'_] and **heat** [_'HEAT'_]. Both, injuries and fatalities, are very affected by them, varying only the rank order.
+
+On the other hand, when we examine economic damages it differs quite nothing; only order of events. However, _'TORNADO'_ still prevails as the first! Its damage value achieves the cypher of more than 3 millions of dollars to families and properties along these years (from 1950). 
+
+And we look toward to historical series of values totalized year by year, we can observe that it's coming up - almost 1 million US$ were lost in damage caused by weather storms. Curiously, in 1992 the level of the series had a big _ramp-up_, which it worths to be investigated, possibly, by statistical inference or time-series analysis, for instance. In 2009 and 2010 it turned back to decrease, but the tendency seems to be ascendent.
+
+The intuitive perception that **Tornado** is one of the most ferocious storms that cities and population can fight has been confirmed by this quick analysis - more than double of worst cases or greatest costs is due to that terrific storm.
+
+* * * *
