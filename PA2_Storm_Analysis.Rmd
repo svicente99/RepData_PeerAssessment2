@@ -8,7 +8,7 @@ output:
     keep_md: true
 transition: fade
 transition-speed: fast
-subtitle: "<span style='color:#5882FA;font-size:0.8em'>Analysis of NOAA Storm Database - severity and harmfull consequences to population health</span>" 
+subtitle: "<span style='color:#5882FA;font-size:0.8em'>Analysis of NOAA Storm Database - severity and harmful consequences to population health</span>" 
 ---
 
 <br><br>
