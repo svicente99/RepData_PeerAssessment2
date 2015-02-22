@@ -5,7 +5,7 @@ February 20th, 2015
 <br><br>
 You may get source code of this at <https://github.com/svicente99/RepData_PeerAssessment2> 
 
-And html version is available at RPubs: <http://rpubs.com/svicente99/RepData_PeerAssessment2>
+And html version is available at RPubs: <http://rpubs.com/svicente99/ReprodResearch_Peer_Assesment2>
 
 * * * *
 
@@ -182,6 +182,7 @@ tail(fatalitiesByEvent,10)
 
 
 ```r
+# adding both associated costs to damage => PROPDMG + CROPDMG and express values in US$x1,000
 df$DAMAGE_COSTS <- round((df$PROPDMG + df$CROPDMG)/1000,3)
 df2 <- aggregate(df$DAMAGE_COSTS, by=list(Event=df$EVTYPE), sum)
 costDamage <- df2[order(df2$x),]
@@ -206,6 +207,7 @@ tail(costDamage,10)
 
 
 ```r
+# obtaining year of any row in dataframe to summarize costs annually
 df$YEAR <- as.integer(format(as.Date(df$BGN_DATE, "%m/%d/%Y 0:00:00"), "%Y"))
 costByYear <- aggregate(df$DAMAGE_COSTS, by=list(Year=df$YEAR), sum)
 names(costByYear)[names(costByYear)=="x"] <- "Annual_Cost"
@@ -234,7 +236,7 @@ Drawing two graphs, each one associated with a **kind of harmful to population**
 
 
 ```r
-## create a panel layout 1x2 setting its margins
+## creating a panel layout 1x2, setting its margins
 par(mfrow=c(1, 2),mar=c(3, 6, 2, 1), oma=c(1.5, 2, 2, 1))													
 
 cEvents_I <- tail(injuriesByEvent$Event,10)
@@ -257,7 +259,7 @@ Drawing one graph associated with **cost of damage** caused by storm events:
 
 
 ```r
-## create a panel layout 1x2 setting its margins
+## creating a panel, setting its margins
 par(mfrow=c(1, 1),mar=c(3, 7, 2, 1), oma=c(1.5, 2, 2, 1))  												
 
 cEvents_D <- tail(costDamage$Event,10)
@@ -278,7 +280,9 @@ And the last graph is also related to **cost of damage** but observed along year
 
 ```r
 par(mfrow=c(1, 1),mar=c(3, 3, 2, 2), oma=c(1.5, 2, 2, 1))    											
+
 plot(costByYear$Year, costByYear$Annual_Cost, type="o", xlab="Year", ylab="US$ x 1,000")
+
 # Label x-axis with years
 nYears = nrow(costByYear)
 axis(1, at=c(1:nYears), lab=costByYear$Year, cex.axis=0.8)
