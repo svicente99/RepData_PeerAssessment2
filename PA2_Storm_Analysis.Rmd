@@ -14,7 +14,7 @@ subtitle: "<span style='color:#5882FA;font-size:0.8em'>Analysis of NOAA Storm Da
 <br><br>
 You may get source code of this at <https://github.com/svicente99/RepData_PeerAssessment2> 
 
-And html version is available at RPubs: <http://rpubs.com/svicente99/RepData_PeerAssessment2>
+And html version is available at RPubs: <http://rpubs.com/svicente99/ReprodResearch_Peer_Assesment2>
 
 * * * *
 
